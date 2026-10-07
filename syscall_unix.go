@@ -31,6 +31,21 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 // The same happens when a func value is passed to a C function, as [RegisterFunc] creates a new callback for each
 // call. Create the callback once with NewCallback and reuse the returned pointer instead.
 func NewCallback(fn any) uintptr {
+	return newCallback(fn, uintptrAdapter(fn))
+}
+
+// NewCallbackWithAdapter is like [NewCallback], but on amd64 and arm64 the callback is dispatched
+// through adapter instead of reflection, which avoids heap allocations on every call. adapter must
+// call fn as described in [CallbackAdapter], and fn's parameters and result must all be passed in
+// integer registers. If adapter is nil, NewCallbackWithAdapter is the same as NewCallback.
+func NewCallbackWithAdapter(fn any, adapter CallbackAdapter) uintptr {
+	if adapter == nil {
+		adapter = uintptrAdapter(fn)
+	}
+	return newCallback(fn, adapter)
+}
+
+func newCallback(fn any, adapter CallbackAdapter) uintptr {
 	ty := reflect.TypeOf(fn)
 	if ty == nil || ty.Kind() != reflect.Func {
 		panic("purego: the type must be a function but was not")
@@ -44,7 +59,7 @@ func NewCallback(fn any) uintptr {
 			panic("purego: CDecl must be the first argument")
 		}
 	}
-	return compileCallback(fn)
+	return compileCallback(fn, adapter)
 }
 
 // maxCb is the maximum number of callbacks
@@ -55,9 +70,11 @@ var cbs struct {
 	lock  sync.Mutex
 	numFn int                  // the number of functions currently in cbs.funcs
 	funcs [maxCB]reflect.Value // the saved callbacks
+	// adapters call the saved callbacks without reflection, if not nil.
+	adapters [maxCB]CallbackAdapter
 }
 
-func compileCallback(fn any) uintptr {
+func compileCallback(fn any, adapter CallbackAdapter) uintptr {
 	val := reflect.ValueOf(fn)
 	if val.Kind() != reflect.Func {
 		panic("purego: the type must be a function but was not")
@@ -105,6 +122,7 @@ output:
 		panic("purego: the maximum number of callbacks has been reached")
 	}
 	cbs.funcs[cbs.numFn] = val
+	cbs.adapters[cbs.numFn] = adapter
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
 }
@@ -133,7 +151,16 @@ var callbackWrap_call = callbackWrap
 func callbackWrap(a *callbackArgs) {
 	cbs.lock.Lock()
 	fn := cbs.funcs[a.index]
+	adapter := cbs.adapters[a.index]
 	cbs.lock.Unlock()
+	// The adapter fast path relies on the frame layout of amd64 and arm64:
+	// the float registers followed by the integer registers.
+	if adapter != nil && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64") {
+		frame := (*[callbackMaxFrame]uintptr)(a.args)
+		f := numOfFloatRegisters()
+		a.result[0] = adapter(frame[f : f+numOfIntegerRegisters() : f+numOfIntegerRegisters()])
+		return
+	}
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)

@@ -28,6 +28,12 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 // inside a loop (e.g. a qsort comparator) keeps consuming callbacks and eventually panics once they are exhausted.
 // The same happens when a func value is passed to a C function, as [RegisterFunc] creates a new callback for each
 // call. Create the callback once with NewCallback and reuse the returned pointer instead.
+// NewCallbackWithAdapter is the same as [NewCallback] on Windows, where callbacks are
+// dispatched by the runtime. adapter is ignored.
+func NewCallbackWithAdapter(fn any, _ CallbackAdapter) uintptr {
+	return NewCallback(fn)
+}
+
 func NewCallback(fn any) uintptr {
 	isCDecl := false
 	ty := reflect.TypeOf(fn)

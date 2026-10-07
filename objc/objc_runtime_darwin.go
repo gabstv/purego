@@ -756,5 +756,38 @@ func NewIMP(fn any) IMP {
 	case ty.In(1) != reflect.TypeFor[SEL]():
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
-	return IMP(purego.NewCallback(fn))
+	return IMP(purego.NewCallbackWithAdapter(fn, impAdapter(fn)))
+}
+
+// impAdapter returns a purego.CallbackAdapter for common method signatures, so that
+// Objective-C can call them without reflection, or nil for other signatures.
+func impAdapter(fn any) purego.CallbackAdapter {
+	switch f := fn.(type) {
+	case func(ID, SEL):
+		return func(a []uintptr) uintptr { f(ID(a[0]), SEL(a[1])); return 0 }
+	case func(ID, SEL) ID:
+		return func(a []uintptr) uintptr { return uintptr(f(ID(a[0]), SEL(a[1]))) }
+	case func(ID, SEL) bool:
+		return func(a []uintptr) uintptr { return boolToUintptr(f(ID(a[0]), SEL(a[1]))) }
+	case func(ID, SEL, ID):
+		return func(a []uintptr) uintptr { f(ID(a[0]), SEL(a[1]), ID(a[2])); return 0 }
+	case func(ID, SEL, ID) ID:
+		return func(a []uintptr) uintptr { return uintptr(f(ID(a[0]), SEL(a[1]), ID(a[2]))) }
+	case func(ID, SEL, ID) bool:
+		return func(a []uintptr) uintptr { return boolToUintptr(f(ID(a[0]), SEL(a[1]), ID(a[2]))) }
+	case func(ID, SEL, ID, ID):
+		return func(a []uintptr) uintptr { f(ID(a[0]), SEL(a[1]), ID(a[2]), ID(a[3])); return 0 }
+	case func(ID, SEL, ID, ID) ID:
+		return func(a []uintptr) uintptr { return uintptr(f(ID(a[0]), SEL(a[1]), ID(a[2]), ID(a[3]))) }
+	case func(ID, SEL, ID, ID) bool:
+		return func(a []uintptr) uintptr { return boolToUintptr(f(ID(a[0]), SEL(a[1]), ID(a[2]), ID(a[3]))) }
+	}
+	return nil
+}
+
+func boolToUintptr(b bool) uintptr {
+	if b {
+		return 1
+	}
+	return 0
 }
