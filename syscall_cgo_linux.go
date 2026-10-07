@@ -11,6 +11,10 @@ import (
 
 var syscallXABI0 = uintptr(cgo.SyscallXABI0)
 
+func NewCallbackWithAdapter(fn any, _ CallbackAdapter) uintptr {
+	return NewCallback(fn)
+}
+
 func NewCallback(_ any) uintptr {
 	panic("purego: NewCallback on Linux is only supported on 386/amd64/arm64/arm/loong64/ppc64le/riscv64/s390x")
 }

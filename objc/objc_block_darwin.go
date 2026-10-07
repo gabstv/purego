@@ -169,7 +169,7 @@ func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 	// create a global callback.
 	// this single callback can dispatch to any function with the same signature,
 	// since the user-provided functions are associated with the actual block allocations.
-	layout.invoke = purego.NewCallback(
+	layout.invoke = purego.NewCallbackWithAdapter(
 		reflect.MakeFunc(
 			typ,
 			func(args []reflect.Value) (results []reflect.Value) {
@@ -180,11 +180,35 @@ func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 				return b.Functions.Load(block).Call(args)
 			},
 		).Interface(),
+		blockAdapter(typ, b.Functions),
 	)
 
 	// store it and return it
 	b.layouts[typ] = layout
 	return layout
+}
+
+// blockAdapter returns a purego.CallbackAdapter that invokes blocks of common function types
+// without reflection, or nil for other types. Like the reflective invoke, it looks up the Go
+// function associated with the block, which is always the first argument.
+func blockAdapter(typ reflect.Type, functions *blockFunctionCache) purego.CallbackAdapter {
+	switch typ {
+	case reflect.TypeFor[func(Block)]():
+		return func(a []uintptr) uintptr {
+			functions.Load(Block(a[0])).Interface().(func(Block))(Block(a[0]))
+			return 0
+		}
+	case reflect.TypeFor[func(Block, ID)]():
+		return func(a []uintptr) uintptr {
+			functions.Load(Block(a[0])).Interface().(func(Block, ID))(Block(a[0]), ID(a[1]))
+			return 0
+		}
+	case reflect.TypeFor[func(Block, ID) ID]():
+		return func(a []uintptr) uintptr {
+			return uintptr(functions.Load(Block(a[0])).Interface().(func(Block, ID) ID)(Block(a[0]), ID(a[1])))
+		}
+	}
+	return nil
 }
 
 // newBlockCache initializes a block cache.
