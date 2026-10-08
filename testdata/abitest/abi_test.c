@@ -130,17 +130,71 @@ void stack_25_int64_exceeds(char *buf, size_t bufsize, int64_t a1, int64_t a2, i
              a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25);
 }
 
-uintptr_t stack_0_uintptr(void) {
+// fixed_arity_N takes exactly N arguments and returns 1*a1 + 2*a2 + ... + N*aN,
+// so that a missing, extra or swapped argument changes the result. fixed_arity_0
+// returns 42. They test Syscall0-Syscall15 with each arity.
+uintptr_t fixed_arity_0(void) {
     return 42;
 }
 
-uintptr_t stack_15_uintptr(
-    uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5,
-    uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10,
-    uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14, uintptr_t a15
-) {
-    return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 +
-           a11 + a12 + a13 + a14 + a15;
+uintptr_t fixed_arity_1(uintptr_t a1) {
+    return 1*a1;
+}
+
+uintptr_t fixed_arity_2(uintptr_t a1, uintptr_t a2) {
+    return 1*a1 + 2*a2;
+}
+
+uintptr_t fixed_arity_3(uintptr_t a1, uintptr_t a2, uintptr_t a3) {
+    return 1*a1 + 2*a2 + 3*a3;
+}
+
+uintptr_t fixed_arity_4(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4;
+}
+
+uintptr_t fixed_arity_5(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5;
+}
+
+uintptr_t fixed_arity_6(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6;
+}
+
+uintptr_t fixed_arity_7(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7;
+}
+
+uintptr_t fixed_arity_8(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8;
+}
+
+uintptr_t fixed_arity_9(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8 + 9*a9;
+}
+
+uintptr_t fixed_arity_10(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8 + 9*a9 + 10*a10;
+}
+
+uintptr_t fixed_arity_11(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10, uintptr_t a11) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8 + 9*a9 + 10*a10 + 11*a11;
+}
+
+uintptr_t fixed_arity_12(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10, uintptr_t a11, uintptr_t a12) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8 + 9*a9 + 10*a10 + 11*a11 + 12*a12;
+}
+
+uintptr_t fixed_arity_13(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10, uintptr_t a11, uintptr_t a12, uintptr_t a13) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8 + 9*a9 + 10*a10 + 11*a11 + 12*a12 + 13*a13;
+}
+
+uintptr_t fixed_arity_14(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10, uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8 + 9*a9 + 10*a10 + 11*a11 + 12*a12 + 13*a13 + 14*a14;
+}
+
+uintptr_t fixed_arity_15(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10, uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14, uintptr_t a15) {
+    return 1*a1 + 2*a2 + 3*a3 + 4*a4 + 5*a5 + 6*a6 + 7*a7 + 8*a8 + 9*a9 + 10*a10 + 11*a11 + 12*a12 + 13*a13 + 14*a14 + 15*a15;
 }
 
 uintptr_t stack_20_uintptr(
