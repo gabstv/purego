@@ -223,3 +223,14 @@ int32_t stack_slice(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4,
                     const int32_t *p, int32_t x) {
     return p[0] + x;
 }
+
+// three_words is 24 bytes, so it is returned in memory through a hidden pointer:
+// in x8 on arm64, and as the first argument on amd64. It tests SyscallMixedStret.
+typedef struct {
+    uintptr_t a, b, c;
+} three_words;
+
+three_words return_three_words(uintptr_t x) {
+    three_words r = {x, x + 1, x + 2};
+    return r;
+}
