@@ -56,6 +56,13 @@ func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintpt
 //
 //go:uintptrescapes
 func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
+	return syscallN(fn, args)
+}
+
+// syscallN is the body of SyscallN and of the fixed-arity Syscall0-Syscall15.
+// It has no //go:uintptrescapes: its callers have it, and it keeps the objects
+// that their arguments point to alive until they return, which covers this call.
+func syscallN(fn uintptr, args []uintptr) (r1, r2, err uintptr) {
 	if fn == 0 {
 		panic("purego: fn is nil")
 	}

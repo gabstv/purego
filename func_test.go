@@ -705,113 +705,117 @@ func TestABI_ArgumentPassing(t *testing.T) {
 	})
 
 	t.Run("syscall_fixed", func(t *testing.T) {
-		fn0, err := load.OpenSymbol(lib, "stack_0_uintptr")
+		// Each SyscallK calls fixed_arity_K, which takes exactly K arguments, so that
+		// the test also passes on Windows, where only the passed arguments are loaded.
+		calls := []func(fn uintptr) (got, gotN uintptr){
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall0(fn)
+				rN, _, _ := purego.SyscallN(fn)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall1(fn, 1)
+				rN, _, _ := purego.SyscallN(fn, 1)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall2(fn, 1, 2)
+				rN, _, _ := purego.SyscallN(fn, 1, 2)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall3(fn, 1, 2, 3)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall4(fn, 1, 2, 3, 4)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall5(fn, 1, 2, 3, 4, 5)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall6(fn, 1, 2, 3, 4, 5, 6)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall7(fn, 1, 2, 3, 4, 5, 6, 7)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall8(fn, 1, 2, 3, 4, 5, 6, 7, 8)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall9(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall10(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall11(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall12(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall13(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall14(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+				return r, rN
+			},
+			func(fn uintptr) (uintptr, uintptr) {
+				r, _, _ := purego.Syscall15(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+				rN, _, _ := purego.SyscallN(fn, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+				return r, rN
+			},
+		}
+		for k, call := range calls {
+			name := fmt.Sprintf("fixed_arity_%d", k)
+			fn, err := load.OpenSymbol(lib, name)
+			if err != nil {
+				t.Fatalf("OpenSymbol(%s) failed: %v", name, err)
+			}
+			// With the arguments 1..k, fixed_arity_k returns 1*1 + 2*2 + ... + k*k.
+			want := uintptr(k * (k + 1) * (2*k + 1) / 6)
+			if k == 0 {
+				want = 42
+			}
+			got, gotN := call(fn)
+			if got != want {
+				t.Errorf("Syscall%d: got %d, want %d", k, got, want)
+			}
+			if gotN != want {
+				t.Errorf("SyscallN with %d arguments: got %d, want %d", k, gotN, want)
+			}
+		}
+
+		// Avoiding the allocation of SyscallN's variadic slice is the point of the fixed-arity variants.
+		fn3, err := load.OpenSymbol(lib, "fixed_arity_3")
 		if err != nil {
-			t.Fatalf("OpenSymbol(stack_0_uintptr) failed: %v", err)
+			t.Fatalf("OpenSymbol(fixed_arity_3) failed: %v", err)
 		}
-		fn15, err := load.OpenSymbol(lib, "stack_15_uintptr")
-		if err != nil {
-			t.Fatalf("OpenSymbol(stack_15_uintptr) failed: %v", err)
-		}
-
-		// stack_0_uintptr takes no arguments and returns the constant 42.
-		{
-			got, _, _ := purego.Syscall0(fn0)
-			gotN, _, _ := purego.SyscallN(fn0)
-			if got != 42 {
-				t.Errorf("Syscall0: got %d, want 42", got)
-			}
-			if got != gotN {
-				t.Errorf("Syscall0 vs SyscallN: %d != %d", got, gotN)
-			}
-		}
-
-		// stack_15_uintptr sums its 15 arguments. Calling it with K explicit
-		// arguments (the remaining slots are zero-initialised) yields sum(1..K).
-		check := func(name string, got, gotN uintptr, want int) {
-			t.Helper()
-			if got != uintptr(want) {
-				t.Errorf("%s: got %d, want %d", name, got, want)
-			}
-			if got != gotN {
-				t.Errorf("%s vs SyscallN: %d != %d", name, got, gotN)
-			}
-		}
-
-		{
-			got, _, _ := purego.Syscall1(fn15, 1)
-			gotN, _, _ := purego.SyscallN(fn15, 1)
-			check("Syscall1", got, gotN, 1)
-		}
-		{
-			got, _, _ := purego.Syscall2(fn15, 1, 2)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2)
-			check("Syscall2", got, gotN, 3)
-		}
-		{
-			got, _, _ := purego.Syscall3(fn15, 1, 2, 3)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3)
-			check("Syscall3", got, gotN, 6)
-		}
-		{
-			got, _, _ := purego.Syscall4(fn15, 1, 2, 3, 4)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4)
-			check("Syscall4", got, gotN, 10)
-		}
-		{
-			got, _, _ := purego.Syscall5(fn15, 1, 2, 3, 4, 5)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5)
-			check("Syscall5", got, gotN, 15)
-		}
-		{
-			got, _, _ := purego.Syscall6(fn15, 1, 2, 3, 4, 5, 6)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6)
-			check("Syscall6", got, gotN, 21)
-		}
-		{
-			got, _, _ := purego.Syscall7(fn15, 1, 2, 3, 4, 5, 6, 7)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7)
-			check("Syscall7", got, gotN, 28)
-		}
-		{
-			got, _, _ := purego.Syscall8(fn15, 1, 2, 3, 4, 5, 6, 7, 8)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8)
-			check("Syscall8", got, gotN, 36)
-		}
-		{
-			got, _, _ := purego.Syscall9(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-			check("Syscall9", got, gotN, 45)
-		}
-		{
-			got, _, _ := purego.Syscall10(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-			check("Syscall10", got, gotN, 55)
-		}
-		{
-			got, _, _ := purego.Syscall11(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-			check("Syscall11", got, gotN, 66)
-		}
-		{
-			got, _, _ := purego.Syscall12(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-			check("Syscall12", got, gotN, 78)
-		}
-		{
-			got, _, _ := purego.Syscall13(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
-			check("Syscall13", got, gotN, 91)
-		}
-		{
-			got, _, _ := purego.Syscall14(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
-			check("Syscall14", got, gotN, 105)
-		}
-		{
-			got, _, _ := purego.Syscall15(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
-			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
-			check("Syscall15", got, gotN, 120)
+		if n := testing.AllocsPerRun(100, func() { purego.Syscall3(fn3, 1, 2, 3) }); n != 0 {
+			t.Errorf("Syscall3: got %v allocs per call, want 0", n)
 		}
 	})
 
