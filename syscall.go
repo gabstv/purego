@@ -29,6 +29,10 @@ type syscallArgs struct {
 	a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32 uintptr
 	f1, f2, f3, f4, f5, f6, f7, f8                                                      uintptr
 	arm64_r8                                                                            uintptr
+
+	// sret receives a struct returned in memory, for SyscallMixedStret. It is part of the
+	// pooled heap object, so passing its address to C does not allocate.
+	sret [4]uintptr
 }
 
 func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintptr) *syscallArgs {
